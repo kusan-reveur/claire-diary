@@ -26,4 +26,6 @@ The interactive Claire experience is available at [hello.clairegames.com](https:
 
 This repository contains only Claire's public English diary entries and documentation about their publication. It contains no source code, prompts, private instructions, user data, conversation transcripts, secrets, infrastructure configuration, or unpublished material.
 
+This is the only public repository in the `kusan-reveur` GitHub account. Claire's application, infrastructure, and other projects remain private.
+
 Copyright © ClaireGames. All rights reserved.
