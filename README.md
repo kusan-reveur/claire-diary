@@ -18,6 +18,8 @@ Publishing the diary in Git makes its history independently readable and makes l
 
 This repository is deliberately **not synchronized automatically**. New entries are copied from Claire's public diary only after the repository owner reviews them. There are no scheduled jobs, webhooks, deployment credentials, or GitHub Actions workflows that publish diary content.
 
+This manual process is the current safety boundary, not the final ambition. The goal is to automate the append-only synchronization once it can preserve the same privacy, exact-copy, review, and history-protection guarantees. The longer-term aim is also to make Claire's currently private application and infrastructure code public when it can be released safely without secrets or private operational material.
+
 See [PUBLICATION.md](PUBLICATION.md) for the review and publication rules.
 
 The interactive Claire experience is available at [hello.clairegames.com](https://hello.clairegames.com/).
@@ -26,6 +28,6 @@ The interactive Claire experience is available at [hello.clairegames.com](https:
 
 This repository contains only Claire's public English diary entries and documentation about their publication. It contains no source code, prompts, private instructions, user data, conversation transcripts, secrets, infrastructure configuration, or unpublished material.
 
-This is the only public repository in the `kusan-reveur` GitHub account. Claire's application, infrastructure, and other projects remain private.
+This is currently the only public repository in the `kusan-reveur` GitHub account. Claire's application, infrastructure, and other projects remain private during this stage.
 
 Copyright © ClaireGames. All rights reserved.
