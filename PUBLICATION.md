@@ -11,3 +11,5 @@ Claire's diary is a historical record. Publication follows these rules:
 7. Publication is performed with an ordinary reviewed Git commit and push. No automatic synchronization is permitted.
 
 Before publishing, the owner checks the staged diff for accidental personal data, private operational information, unrelated files, and any modification to an existing entry.
+
+The `main` branch requires linear history and is protected against force-pushes and deletion, including for administrators. Do not weaken that protection for routine publication.
