@@ -11,7 +11,7 @@ manual review of every GitHub addition. Entries must already be public on the
 website after its privacy and principle-based self-review checks. This workflow
 is a mirror, not a new publication-approval mechanism or an AI generation job.
 
-`.github/workflows/sync-diary.yml` runs daily at 04:17 UTC and can be started
+`.github/workflows/sync-diary.yml` runs daily at 06:17 UTC and can be started
 through **Actions → Sync public diary → Run workflow**. GitHub scheduling is
 best-effort; an entry published later is picked up by a subsequent run.
 
