@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { applyPlan, fetchPublicDiary, loadArchive, MAX_RESPONSE_BYTES, planSync, PUBLIC_DIARY_URL, renderEntry, validateStagedChanges } from "../scripts/sync-diary.mjs";
+import { CHAIN_PATH, planChain, verifyArchive } from "../scripts/integrity.mjs";
 
 const readme = "# Diary\n\n<!-- diary-index:start -->\n<!-- diary-index:end -->\n\nKeep this text.\n";
 const entry = (date = "2026-08-12", overrides = {}) => ({
@@ -66,26 +67,41 @@ test("requires window overlap if the public API returns its full 31-entry limit"
 test("writes new files exclusively, preserves historical checksums, and refuses symlinks", async () => {
   const root = await mkdtemp(join(tmpdir(), "diary-sync-test-"));
   await mkdir(join(root, "entries"));
+  await mkdir(join(root, "integrity/heads"), { recursive: true });
   await writeFile(join(root, "README.md"), readme);
   const original = renderEntry(entry());
   await writeFile(join(root, "entries/2026-08-12.md"), original);
+  await assert.rejects(loadArchive(root), /missing_integrity_chain/);
+  const genesis = planChain("", [{ path: "entries/2026-08-12.md", content: original, date: "2026-08-12" }]);
+  await writeFile(join(root, CHAIN_PATH), genesis.chain);
+  await writeFile(join(root, genesis.head.path), genesis.head.content);
   const archive = await loadArchive(root);
   const plan = planSync({ diary: [entry("2026-09-20"), entry()] }, archive.existing, archive.readme, now);
+  plan.integrity = planChain(archive.chain, plan.additions);
   await applyPlan(root, plan);
   const hash = (value) => createHash("sha256").update(value).digest("hex");
   assert.equal(hash(await readFile(join(root, "entries/2026-08-12.md"))), hash(original));
   assert.deepEqual((await readdir(join(root, "entries"))).sort(), ["2026-08-12.md", "2026-09-20.md"]);
+  const updated = await loadArchive(root);
+  assert.ok(updated.chain.startsWith(genesis.chain));
+  assert.deepEqual([...updated.heads.keys()].sort(), ["integrity/heads/000001.txt", "integrity/heads/000002.txt"]);
+  assert.equal(verifyArchive(updated.existing, updated.chain, updated.heads).entries, 2);
   await assert.rejects(applyPlan(root, plan), { code: "EEXIST" });
   await symlink(join(root, "README.md"), join(root, "entries/2026-09-19.md"));
   await assert.rejects(loadArchive(root), /invalid_archive_file/);
 });
 
-test("allows only staged entry additions and the README index, never edits or deletions", () => {
+test("allows only staged entry additions, the README index and the chain append, never edits or deletions", () => {
   const additions = [{ path: "entries/2026-09-20.md" }];
-  assert.doesNotThrow(() => validateStagedChanges("A\tentries/2026-09-20.md\nM\tREADME.md", additions));
-  for (const diff of ["M\tentries/2026-09-20.md", "D\tentries/2026-08-12.md", "A\tsecrets.txt", "M\tREADME.md", "R100\told.md\tnew.md"]) {
-    assert.throws(() => validateStagedChanges(diff, additions));
+  const head = { path: "integrity/heads/000002.txt" };
+  const valid = "A\tentries/2026-09-20.md\nM\tREADME.md\nM\tintegrity/chain.txt\nA\tintegrity/heads/000002.txt";
+  assert.doesNotThrow(() => validateStagedChanges(valid, additions, head));
+  for (const diff of ["M\tentries/2026-09-20.md", "D\tentries/2026-08-12.md", "A\tsecrets.txt", "M\tREADME.md", "R100\told.md\tnew.md",
+    "A\tentries/2026-09-20.md\nM\tREADME.md\nA\tintegrity/heads/000002.txt",
+    `${valid}\nM\tintegrity/heads/000001.txt`, `${valid}\nD\tintegrity/heads/000001.txt.ots`]) {
+    assert.throws(() => validateStagedChanges(diff, additions, head));
   }
+  assert.throws(() => validateStagedChanges("A\tentries/2026-09-20.md\nM\tREADME.md\nM\tintegrity/chain.txt", additions), /unexpected_staged_change/);
 });
 
 test("fetches only the fixed public endpoint without credentials or redirects", async () => {

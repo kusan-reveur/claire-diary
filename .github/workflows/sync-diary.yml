@@ -2,13 +2,15 @@ name: Sync public diary
 
 on:
   schedule:
+    # 06:17 publishes Claire's new entry; 18:17 collects Bitcoin confirmations sooner.
     - cron: "17 6 * * *"
+    - cron: "17 18 * * *"
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["scripts/**", "tests/**", ".github/workflows/sync-diary.yml"]
+    paths: ["entries/**", "integrity/**", "scripts/**", "tests/**", ".github/workflows/sync-diary.yml"]
   pull_request:
-    paths: ["scripts/**", "tests/**", ".github/workflows/sync-diary.yml"]
+    paths: ["entries/**", "integrity/**", "scripts/**", "tests/**", ".github/workflows/sync-diary.yml"]
 
 permissions:
   contents: read
@@ -26,12 +28,14 @@ jobs:
           node-version: 22.22.0
           package-manager-cache: false
       - run: node --test
+      - name: Recompute every fingerprint and chain link
+        run: node scripts/integrity.mjs
 
   publish:
     if: github.repository == 'kusan-reveur/claire-diary' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     needs: test
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     concurrency:
       group: public-diary-publication
       cancel-in-progress: false
@@ -45,9 +49,22 @@ jobs:
         with:
           node-version: 22.22.0
           package-manager-cache: false
+      - name: Install the OpenTimestamps client (hash-pinned)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ots"
+          "$RUNNER_TEMP/ots/bin/pip" install --disable-pip-version-check --no-deps --require-hashes -r scripts/ots-requirements.txt
       - name: Append published entries as Claire
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh auth setup-git --hostname github.com
           node scripts/sync-diary.mjs --publish
+      - name: Timestamp the chain in Bitcoin
+        # Also runs when the website was unreachable, so pending proofs still upgrade.
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OTS_BIN_DIR: ${{ runner.temp }}/ots/bin
+        run: |
+          gh auth setup-git --hostname github.com
+          node scripts/anchor.mjs --publish

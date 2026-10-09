@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CHAIN_PATH, IntegrityError, loadIntegrity, planChain, verifyArchive } from "./integrity.mjs";
 
 export const PUBLIC_DIARY_URL = "https://bonjourclaire.com/api/claire/public";
 export const MAX_RESPONSE_BYTES = 1_048_576;
@@ -116,7 +117,7 @@ export async function loadArchive(root) {
     requireCondition(ENTRY_PATH.test(path) && (await lstat(resolve(root, path))).isFile(), "invalid_archive_file");
     existing.set(path, await readFile(resolve(root, path), "utf8"));
   }
-  return { existing, readme: await readFile(resolve(root, "README.md"), "utf8") };
+  return { existing, readme: await readFile(resolve(root, "README.md"), "utf8"), ...await loadIntegrity(root) };
 }
 
 export async function applyPlan(root, plan) {
@@ -126,17 +127,27 @@ export async function applyPlan(root, plan) {
     await writeFile(resolve(root, entry.path), entry.content, { flag: "wx" });
   }
   await writeFile(resolve(root, "README.md"), plan.readme);
+  if (plan.integrity?.head) {
+    // The chain only grows: the new text must start with the verified old text.
+    const previous = await readFile(resolve(root, CHAIN_PATH), "utf8");
+    requireCondition(plan.integrity.chain.startsWith(previous) && plan.integrity.chain.length > previous.length, "chain_not_append_only");
+    await writeFile(resolve(root, CHAIN_PATH), plan.integrity.chain);
+    await writeFile(resolve(root, plan.integrity.head.path), plan.integrity.head.content, { flag: "wx" });
+  }
 }
 
-export function validateStagedChanges(changes, additions) {
+export function validateStagedChanges(changes, additions, head = null) {
   const expected = new Set(additions.map((entry) => entry.path));
+  if (head) expected.add(head.path);
   const seen = new Set();
   for (const line of changes.trim().split("\n").filter(Boolean)) {
     const [status, path] = line.split("\t");
-    requireCondition((status === "A" && expected.has(path)) || (status === "M" && path === "README.md"), "unexpected_staged_change");
+    requireCondition((status === "A" && expected.has(path)) ||
+      (status === "M" && (path === "README.md" || (head && path === CHAIN_PATH))), "unexpected_staged_change");
     seen.add(path);
   }
   requireCondition([...expected].every((path) => seen.has(path)), "missing_staged_entry");
+  requireCondition(!head || seen.has(CHAIN_PATH), "missing_staged_chain");
 }
 
 export async function main(publish = false) {
@@ -149,12 +160,15 @@ export async function main(publish = false) {
     requireCondition(git("remote", "get-url", "origin").replace(/\.git$/, "") === `https://github.com/${REPOSITORY}`, "unexpected_remote");
   }
   const archive = await loadArchive(root);
+  // Every run re-verifies all fingerprints and links before planning anything.
+  verifyArchive(archive.existing, archive.chain, archive.heads);
   const plan = planSync(await fetchPublicDiary(), archive.existing, archive.readme);
+  plan.integrity = planChain(archive.chain, plan.additions);
   console.log(JSON.stringify({ newEntries: plan.additions.length, dates: plan.additions.map((entry) => entry.date), mode: publish ? "publish" : "check" }));
   if (!publish || plan.additions.length === 0) return;
   await applyPlan(root, plan);
-  git("add", "--", "README.md", ...plan.additions.map((entry) => entry.path));
-  validateStagedChanges(git("diff", "--cached", "--name-status", "--no-renames"), plan.additions);
+  git("add", "--", "README.md", CHAIN_PATH, plan.integrity.head.path, ...plan.additions.map((entry) => entry.path));
+  validateStagedChanges(git("diff", "--cached", "--name-status", "--no-renames"), plan.additions, plan.integrity.head);
   git("-c", "user.name=Claire", "-c", "user.email=contact@clairegames.com", "commit", "-m",
     `diary: publish entries through ${plan.additions.at(-1).date}`);
   // Normal fast-forward only. A concurrent push fails safely; next run rechecks.
@@ -169,7 +183,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     process.exitCode = 1;
   } else {
     main(args[0] === "--publish").catch((error) => {
-      console.error(error instanceof SyncError ? error.message : "diary_sync_failed");
+      console.error(error instanceof SyncError || error instanceof IntegrityError ? error.message : "diary_sync_failed");
       process.exitCode = 1;
     });
   }
