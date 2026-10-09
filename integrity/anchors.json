@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "anchors": [
+    {
+      "head": 28,
+      "date": "2026-10-08",
+      "file": "integrity/heads/000028.txt",
+      "link": "3584a81e538a2744061e91172a02ac7d221632b72a5ddc623fcbb64019e189f6",
+      "status": "pending"
+    }
+  ]
+}
