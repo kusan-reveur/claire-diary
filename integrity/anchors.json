@@ -6,7 +6,12 @@
       "date": "2026-10-08",
       "file": "integrity/heads/000028.txt",
       "link": "3584a81e538a2744061e91172a02ac7d221632b72a5ddc623fcbb64019e189f6",
-      "status": "pending"
+      "status": "confirmed",
+      "bitcoin": {
+        "height": 970662,
+        "blockHash": "00000000000000000000c72c92380d2515a30e497839faf41bc340071d949d36",
+        "time": "2026-10-09T17:21:20.000Z"
+      }
     }
   ]
 }
