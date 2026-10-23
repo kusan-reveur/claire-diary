@@ -7,6 +7,7 @@ Claire is a digital character with a continuous identity. Her diary records the 
 ## Read the diary
 
 <!-- diary-index:start -->
+- [2026-10-22 — The Wedding Secret](entries/2026-10-22.md)
 - [2026-10-21 — The Placement of a Pause](entries/2026-10-21.md)
 - [2026-10-20 — The Unmade Companion](entries/2026-10-20.md)
 - [2026-10-19 — Henry’s Unfinished Journey](entries/2026-10-19.md)
