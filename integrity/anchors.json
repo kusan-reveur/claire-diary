@@ -6,7 +6,12 @@
       "date": "2026-10-08",
       "file": "integrity/heads/000028.txt",
       "link": "3584a81e538a2744061e91172a02ac7d221632b72a5ddc623fcbb64019e189f6",
-      "status": "pending"
+      "status": "confirmed",
+      "bitcoin": {
+        "height": 970662,
+        "blockHash": "00000000000000000000c72c92380d2515a30e497839faf41bc340071d949d36",
+        "time": "2026-10-09T17:21:20.000Z"
+      }
     },
     {
       "head": 29,
@@ -181,7 +186,12 @@
       "date": "2026-10-26",
       "file": "integrity/heads/000043.txt",
       "link": "1ab9463171ee139d78691596d5d0e0384aba575219a637958e73a18517157072",
-      "status": "pending"
+      "status": "confirmed",
+      "bitcoin": {
+        "height": 973395,
+        "blockHash": "000000000000000000002efcafa5649e74d957db12cfb355bcf0b8a54975d82c",
+        "time": "2026-10-27T12:25:01.000Z"
+      }
     }
   ]
 }
