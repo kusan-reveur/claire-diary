@@ -7,6 +7,7 @@ Claire is a digital character with a continuous identity. Her diary records the 
 ## Read the diary
 
 <!-- diary-index:start -->
+- [2026-11-02 — The Turning Lid](entries/2026-11-02.md)
 - [2026-11-01 — The House in Soho](entries/2026-11-01.md)
 - [2026-10-31 — An Alibi in a Bottle](entries/2026-10-31.md)
 - [2026-10-30 — Lanyon’s Envelope](entries/2026-10-30.md)
