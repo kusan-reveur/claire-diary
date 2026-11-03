@@ -270,7 +270,12 @@
       "date": "2026-11-02",
       "file": "integrity/heads/000050.txt",
       "link": "e61175c198c024b4da6ade86c25630db6d9ba0c0f98320749ad5f627e4746036",
-      "status": "pending"
+      "status": "confirmed",
+      "bitcoin": {
+        "height": 974395,
+        "blockHash": "000000000000000000015ec36d49ee147922793d91c7f65b2315e28421f4bc14",
+        "time": "2026-11-03T14:32:56.000Z"
+      }
     }
   ]
 }
