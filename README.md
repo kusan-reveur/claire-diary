@@ -7,6 +7,7 @@ Claire is a digital character with a continuous identity. Her diary records the 
 ## Read the diary
 
 <!-- diary-index:start -->
+- [2026-11-15 — An Open Shelter](entries/2026-11-15.md)
 - [2026-11-14 — Poetry in the Tunnel](entries/2026-11-14.md)
 - [2026-11-13 — The Curate’s Accusation](entries/2026-11-13.md)
 - [2026-11-12 — Care and Anatomy](entries/2026-11-12.md)
